@@ -1,0 +1,102 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+
+  /* JMS maroon, built around the logo colour #6d261e (brand-600) */
+  --color-brand-50: #fbf3f2;
+  --color-brand-100: #f6e3e0;
+  --color-brand-200: #ebc4be;
+  --color-brand-300: #db9a91;
+  --color-brand-500: #8f362c;
+  --color-brand-600: #6d261e;
+  --color-brand-700: #5b1f19;
+  --color-brand-800: #4a1a15;
+  --color-brand-900: #3a1511;
+  --color-brand-950: #2a1210;
+
+  /* JMS logo grey and ink */
+  --color-jms-grey: #818384;
+  --color-jms-ink: #251f1f;
+
+  --color-gold-50: #fffbeb;
+  --color-gold-100: #fef3c7;
+  --color-gold-300: #fcd34d;
+  --color-gold-400: #fbbf24;
+  --color-gold-500: #f59e0b;
+  --color-gold-600: #d97706;
+
+  /* One colour per scoring criterion, used consistently in every chart */
+  --color-crit-timeliness: #0ea5e9;
+  --color-crit-supporting: #a3443a;
+  --color-crit-interpersonal: #14b8a6;
+  --color-crit-innovation: #f59e0b;
+}
+
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-800 antialiased;
+  }
+  h1, h2, h3 {
+    @apply text-slate-900 tracking-tight;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-brand-500;
+  }
+}
+
+@utility card {
+  @apply rounded-2xl bg-white border border-slate-200/80 shadow-sm;
+}
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition
+    disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+@layer components {
+  .btn-primary {
+    @apply btn bg-brand-600 text-white hover:bg-brand-700 shadow-sm shadow-brand-600/20;
+  }
+  .btn-gold {
+    @apply btn bg-gold-400 text-brand-950 hover:bg-gold-300 shadow-sm shadow-gold-500/30;
+  }
+  .btn-ghost {
+    @apply btn text-slate-700 hover:bg-slate-100;
+  }
+  .btn-outline {
+    @apply btn border border-slate-300 bg-white text-slate-700 hover:bg-slate-50;
+  }
+  .btn-danger {
+    @apply btn bg-rose-600 text-white hover:bg-rose-700;
+  }
+  .input {
+    @apply w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm placeholder:text-slate-400
+      focus:border-brand-500 focus:ring-2 focus:ring-brand-200 focus:outline-none;
+  }
+  .label {
+    @apply mb-1.5 block text-sm font-medium text-slate-700;
+  }
+  .pill {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold;
+  }
+  .table-base {
+    @apply w-full text-sm;
+  }
+  .table-base th {
+    @apply px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 bg-slate-50;
+  }
+  .table-base td {
+    @apply px-4 py-3 border-t border-slate-100;
+  }
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+.animate-rise {
+  animation: rise 0.4s ease-out both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-rise { animation: none; }
+}
