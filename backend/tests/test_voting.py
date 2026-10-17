@@ -6,10 +6,13 @@ from app.main import app
 from tests.conftest import login
 
 
-def make_open_campaign(admin: TestClient) -> dict:
+def make_open_campaign(admin: TestClient, month_offset: int = 0) -> dict:
     now = datetime.now(timezone.utc)
+    month_index = now.month - 1 + month_offset
+    year = now.year + month_index // 12
+    month = month_index % 12 + 1
     r = admin.post("/api/admin/campaigns", json={
-        "month": now.month, "year": now.year,
+        "month": month, "year": year,
         "start_at": (now - timedelta(hours=1)).isoformat(),
         "end_at": (now + timedelta(days=5)).isoformat(),
     })
@@ -87,6 +90,55 @@ def test_full_monthly_cycle(people):
 
     actions = {a["action"] for a in admin.get("/api/admin/audit").json()}
     assert {"campaign_created", "campaign_opened", "vote_submitted", "campaign_closed", "result_published"} <= actions
+
+
+def test_override_publish_only_allowed_for_exact_tie(people):
+    admin = login("admin@x.com")
+    campaign = make_open_campaign(admin)
+    cid = campaign["id"]
+    e2 = people["e2@x.com"].id
+    e3 = people["e3@x.com"].id
+
+    for email in ("e1@x.com", "e4@x.com", "e5@x.com"):
+        assert vote(login(email), cid, e2, value=5).status_code == 201
+    for email in ("admin@x.com", "hr@x.com", "e2@x.com"):
+        assert vote(login(email), cid, e3, value=4).status_code == 201
+
+    assert admin.post(f"/api/admin/campaigns/{cid}/close").status_code == 200
+    results = admin.get(f"/api/admin/campaigns/{cid}/results").json()["results"]
+    assert results[0]["user"]["id"] == e2
+    assert next(r for r in results if r["user"]["id"] == e3)["rank"] == 2
+
+    r = admin.post(
+        f"/api/admin/campaigns/{cid}/publish",
+        json={"user_id": e3, "override_reason": "Preference"},
+    )
+    assert r.status_code == 400
+    assert r.json()["detail"] == "Overrides are only allowed to settle an exact tie."
+
+
+def test_override_publish_allowed_for_exact_tie(people):
+    admin = login("admin@x.com")
+    campaign = make_open_campaign(admin)
+    cid = campaign["id"]
+    e2 = people["e2@x.com"].id
+    e3 = people["e3@x.com"].id
+
+    for email in ("e1@x.com", "e4@x.com", "e5@x.com"):
+        assert vote(login(email), cid, e2, value=5).status_code == 201
+    for email in ("admin@x.com", "hr@x.com", "e2@x.com"):
+        assert vote(login(email), cid, e3, value=5).status_code == 201
+
+    assert admin.post(f"/api/admin/campaigns/{cid}/close").status_code == 200
+    results = admin.get(f"/api/admin/campaigns/{cid}/results").json()["results"]
+    assert results[0]["tied_with_next"]
+
+    r = admin.post(
+        f"/api/admin/campaigns/{cid}/publish",
+        json={"user_id": e3, "override_reason": "Tie settled by HR review"},
+    )
+    assert r.status_code == 200, r.text
+    assert admin.get(f"/api/winners/{cid}").json()["user"]["id"] == e3
 
 
 def test_weights_must_total_100(people):

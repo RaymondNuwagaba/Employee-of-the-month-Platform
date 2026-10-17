@@ -281,6 +281,8 @@ def publish(campaign_id: int, body: PublishIn, request: Request, db: DB, user: S
         if chosen is None:
             raise HTTPException(status.HTTP_400_BAD_REQUEST, "That employee is not a ranked candidate.")
         # Picking someone other than rank 1 is only acceptable to settle an exact tie, and must be justified.
+        if chosen.sort_key != top.sort_key:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "Overrides are only allowed to settle an exact tie.")
         if not body.override_reason:
             raise HTTPException(status.HTTP_400_BAD_REQUEST, "A reason is required when not publishing rank 1.")
 
